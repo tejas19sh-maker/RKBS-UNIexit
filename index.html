@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RKBS UNIexit | Nebula Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+        
+        :root { 
+            --blue: #00d2ff; --purple: #9d50bb; --dark: #0f0c29;
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon-blue: 0 0 15px rgba(0, 210, 255, 0.4);
+            --neon-purple: 0 0 15px rgba(157, 80, 187, 0.4);
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0f0c29);
+            background-size: 400% 400%;
+            animation: nebulaFlow 15s ease infinite;
+            color: white; margin: 0; padding: 15px; min-height: 100vh;
+        }
+
+        @keyframes nebulaFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .glass-panel { 
+            background: var(--glass); backdrop-filter: blur(25px); 
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 35px; 
+            padding: 25px; margin-bottom: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            animation: panelFade 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes panelFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .identity-card {
+            background: rgba(255, 255, 255, 0.03); border-radius: 25px; padding: 18px;
+            margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.4s ease;
+        }
+        .identity-card:hover { 
+            border-color: var(--blue); box-shadow: var(--neon-blue);
+            transform: scale(1.02);
+        }
+
+        .btn-cosmic { 
+            background: linear-gradient(135deg, var(--blue), var(--purple)); color: white;
+            border: none; padding: 16px; border-radius: 20px; font-weight: 800;
+            width: 100%; cursor: pointer; transition: 0.4s; text-transform: uppercase;
+            letter-spacing: 1px; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .btn-cosmic:active { transform: scale(0.95); }
+
+        .stat-pill { 
+            background: rgba(0, 210, 255, 0.05); padding: 15px; border-radius: 25px; 
+            border: 1px solid rgba(0, 210, 255, 0.2); text-align: center;
+        }
+        .stat-pill h2 { font-size: 32px; margin: 0; color: var(--blue); text-shadow: var(--neon-blue); }
+
+        .tab-btn { 
+            background: transparent; border: 1px solid rgba(255,255,255,0.2); 
+            color: white; padding: 12px 22px; border-radius: 15px; font-weight: 700;
+            transition: 0.3s;
+        }
+        .tab-btn.active { background: var(--blue); color: #000; border-color: var(--blue); box-shadow: var(--neon-blue); }
+
+        input, select, textarea { 
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 18px; padding: 15px; color: white; width: 100%; margin-bottom: 15px;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--blue); box-shadow: var(--neon-blue); background: rgba(255,255,255,0.1); }
+
+        .section, .sub-section { display: none; } .active { display: block; animation: sectionSlide 0.5s ease; }
+        @keyframes sectionSlide { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        #liveClock { background: linear-gradient(to right, var(--blue), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
+        
+        .ind { font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 10px; }
+        .ind-early { background: #ff4757; box-shadow: 0 0 10px rgba(255,71,87,0.4); }
+        .ind-outpass { background: #ffd700; color: #000; box-shadow: 0 0 10px rgba(255,215,0,0.4); }
+
+    </style>
+</head>
+<body>
+
+    <header style="display:flex; justify-content:space-between; align-items:center; padding: 10px 5px 25px;">
+        <img src="https://i.imgur.com/Wl870uP.png" style="width: 48px; filter: drop-shadow(0 0 8px var(--blue));">
+        <div id="liveClock" style="font-size: 18px;">--:--:--</div>
+    </header>
+
+    <div id="loginOverlay" style="position:fixed; inset:0; background:var(--dark); z-index:999; display:flex; align-items:center; justify-content:center;">
+        <div class="glass-panel" style="max-width:380px; width: 90%; text-align:center;">
+            <img src="https://i.imgur.com/Wl870uP.png" style="width:100px; margin-bottom: 20px; animation: pulse 2s infinite;">
+            <h2 style="font-weight: 800; letter-spacing: 2px;">NEBULA UNIexit</h2>
+            <input type="text" id="userID" placeholder="Access Username">
+            <input type="password" id="userPass" placeholder="Quantum Key">
+            <button class="btn-cosmic" onclick="handleAuth()">ENTER CORE</button>
+        </div>
+    </div>
+
+    <div id="appBody" style="display:none; max-width:1200px; margin:auto;">
+        
+        <div id="principalSec" class="section">
+            <div class="tab-container" style="display:flex; gap:10px; margin-bottom:20px;">
+                <button class="tab-btn active" onclick="showSub('prinRequests')">Approvals</button>
+                <button class="tab-btn" onclick="showSub('prinHistory')">Registry</button>
+                <button class="tab-btn" style="border-color:var(--danger); color:var(--danger)" onclick="coreFactoryReset()">RESET</button>
+            </div>
+            <div id="prinRequests" class="sub-section active"><div id="pendingArea"></div></div>
+            <div id="prinHistory" class="sub-section">
+                <button onclick="downloadCSV()" class="btn-cosmic" style="width:auto; margin-bottom:15px; font-size:12px;">Export Archive</button>
+                <div id="historyArea" class="history-grid"></div>
+            </div>
+        </div>
+
+        <div id="gatekeeperSec" class="section">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:25px;">
+                <div class="stat-pill"><h5>OUTSIDE</h5><h2 id="countOut">0</h2></div>
+                <div class="stat-pill"><h5>RETURNED</h5><h2 id="countRet">0</h2></div>
+            </div>
+            <div class="tab-container" style="display:flex; gap:10px; margin-bottom:20px;">
+                <button class="tab-btn active" onclick="showSub('gateLive')">Active</button>
+                <button class="tab-btn" onclick="showSub('gateHistory')">Daily Log</button>
+            </div>
+            <div id="gateLive" class="sub-section active"><div id="gateArea"></div></div>
+            <div id="gateHistory" class="sub-section"><div id="gateHistoryArea" class="history-grid"></div></div>
+        </div>
+
+        <div id="teacherSec" class="section">
+            <div class="glass-panel">
+                <h3 style="margin-top:0;">Request Generator</h3>
+                <video id="video" autoplay playsinline style="width:100%; border-radius:25px; margin-bottom:15px; border: 2px solid var(--purple);"></video>
+                <img id="photoPreview" style="display:none; width:100%; border-radius:25px; margin-bottom:15px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:15px;">
+                    <button class="btn-cosmic" style="background:rgba(255,255,255,0.1)" onclick="startCamera()">Open Lens</button>
+                    <button class="btn-cosmic" onclick="capture()">Capture</button>
+                </div>
+                <input class="sName" placeholder="Student Full Name">
+                <input class="sRoll" placeholder="Roll Number">
+                <input type="tel" id="sParentPhone" placeholder="Parent WhatsApp (91...)">
+                <select id="sClass"><option value="">Select Grade</option><script>for(let i=1;i<=12;i++) document.write(`<option value="${i}">Grade ${i}</option>`)</script></select>
+                <select id="leaveType"><option value="Outpass">Short Outpass (No MSG)</option><option value="Early Leave">Early Leave (Auto MSG)</option></select>
+                <textarea id="sReason" placeholder="Detailed Reason..."></textarea>
+                <button class="btn-cosmic" onclick="submitRequest()">Transmit to Principal</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Config same as previous
+    const firebaseConfig = { apiKey: "AIzaSyB_D4EP5sNpeboDHTzl0S1YOk2QD-JmLzQ", authDomain: "rkbs-uniexit.firebaseapp.com", databaseURL: "https://rkbs-uniexit-default-rtdb.firebaseio.com/", projectId: "rkbs-uniexit", storageBucket: "rkbs-uniexit.firebasestorage.app", messagingSenderId: "20370595296", appId: "1:20370595296:web:a7eaf3482b5673410b1f85" };
+    firebase.initializeApp(firebaseConfig); const db = firebase.database();
+    let currentUser = null, photoData = "";
+
+    setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString(); }, 1000);
+
+    function handleAuth() {
+        const id = document.getElementById('userID').value.trim().toLowerCase();
+        const pass = document.getElementById('userPass').value;
+        if(pass === "rkbs99" && id === "principal_jr") currentUser = { role: 'principal', wing: 'junior' };
+        else if(pass === "rkbs88" && id === "principal_sr") currentUser = { role: 'principal', wing: 'senior' };
+        else if(pass === "jrgate123" && id === "gate_jr") currentUser = { role: 'gatekeeper', wing: 'junior' };
+        else if(pass === "srgate123" && id === "gate_sr") currentUser = { role: 'gatekeeper', wing: 'senior' };
+        else if(pass === "class123" && id.startsWith('class')) {
+            let cls = parseInt(id.replace('class',''));
+            currentUser = { role: 'teacher', class: cls, wing: cls <= 5 ? 'junior' : 'senior' };
+        } else { return alert("Invalid Key"); }
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('appBody').style.display = 'block';
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(currentUser.role + 'Sec').classList.add('active');
+        initSync();
+    }
+
+    function showSub(id) { 
+        document.querySelectorAll('.sub-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(event) event.target.classList.add('active');
+    }
+
+    async function startCamera() { const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); document.getElementById('video').srcObject = s; }
+    function capture() { const v = document.getElementById('video'), c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight; c.getContext('2d').drawImage(v,0,0); photoData = c.toVDataURL = c.toDataURL('image/webp', 0.5); document.getElementById('photoPreview').src = photoData; document.getElementById('photoPreview').style.display = 'block'; v.style.display = 'none'; }
+
+    function submitRequest() {
+        const name = document.querySelector('.sName').value, roll = document.querySelector('.sRoll').value, cls = parseInt(document.getElementById('sClass').value);
+        if(!name || !cls || !photoData) return alert("Archive Data Incomplete");
+        db.ref('requests/' + Date.now()).set({ wing: cls <= 5 ? 'junior' : 'senior', name, roll, class: cls, photo: photoData, status: 'pending', reason: document.getElementById('sReason').value, leaveType: document.getElementById('leaveType').value, parent: document.getElementById('sParentPhone').value, timeIn: '--', timeOut: '--', date: new Date().toLocaleDateString() });
+        location.reload();
+    }
+
+    function initSync() {
+        db.ref('requests').on('value', s => {
+            const data = Object.entries(s.val() || {}).reverse();
+            const areas = { p: document.getElementById('pendingArea'), h: document.getElementById('historyArea'), g: document.getElementById('gateArea'), gh: document.getElementById('gateHistoryArea') };
+            Object.values(areas).forEach(a => { if(a) a.innerHTML = ""; });
+
+            let outCount = 0, retCount = 0;
+
+            data.forEach(([id, r]) => {
+                if(r.wing !== currentUser.wing) return;
+                if(r.status === 'Out') outCount++;
+                if(r.status === 'Returned') retCount++;
+
+                const card = `<div class="identity-card"><span class="ind ${r.leaveType==='Early Leave'?'ind-early':'ind-outpass'}">${r.leaveType}</span><div style="display:flex; gap:15px; margin-top:12px;"><img src="${r.photo}" style="width:70px; height:70px; border-radius:18px; object-fit:cover; border:1px solid rgba(255,255,255,0.2);"><div><b>${r.name}</b><br><small>Roll: ${r.roll} | Grade: ${r.class}</small><br><small style="opacity:0.7">${r.reason}</small></div></div>`;
+                
+                if(currentUser.role === 'principal' && r.status === 'pending') areas.p.innerHTML += card + `<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:15px;"><button class="btn-cosmic" onclick="upStatus('${id}','approved')">Authorize</button><button class="btn-cosmic" style="background:var(--danger)" onclick="upStatus('${id}','rejected')">Deny</button></div></div>`;
+                if(currentUser.role === 'principal' && (r.status === 'Out' || r.status === 'Returned')) areas.h.innerHTML += card + `<div style="margin-top:10px; font-size:11px; opacity:0.6;">Recorded Exit: ${r.timeOut} | Return: ${r.timeIn}</div></div>`;
+                
+                if(currentUser.role === 'gatekeeper') {
+                    if(r.status === 'approved') areas.g.innerHTML += card + `<button class="btn-cosmic" style="margin-top:15px;" onclick="gateOut('${id}','${r.parent}','${r.name}','${r.leaveType}')">Confirm Identity & Exit</button></div>`;
+                    else if(r.status === 'Out' && r.leaveType === 'Outpass') areas.g.innerHTML += card + `<button class="btn-cosmic" style="background:var(--success); margin-top:15px;" onclick="upStatus('${id}','Returned', true)">Verify Check-In</button></div>`;
+                    if(r.status === 'Out' || r.status === 'Returned') areas.gh.innerHTML += card + `<div style="margin-top:10px; font-size:11px;">Log: ${r.timeOut} -> ${r.timeIn}</div></div>`;
+                }
+            });
+
+            if(currentUser.role === 'gatekeeper') {
+                document.getElementById('countOut').innerText = outCount;
+                document.getElementById('countRet').innerText = retCount;
+            }
+        });
+    }
+
+    function upStatus(id, s, ret = false) { let u = { status: s }; if(ret) u.timeIn = new Date().toLocaleTimeString(); db.ref('requests/' + id).update(u); }
+    function gateOut(id, ph, nm, type) { 
+        const t = new Date().toLocaleTimeString(); 
+        db.ref('requests/' + id).update({ status: 'Out', timeOut: t }); 
+        if(type === 'Early Leave') { window.open(`https://wa.me/${ph}?text=RKBS Notification: Student ${nm} has safely cleared the security gate for Early Leave at ${t}.`, '_blank'); }
+    }
+    
+    function coreFactoryReset() {
+        const code = prompt("SUPERUSER CODE REQUIRED:");
+        if(code === "RKBS_GLOBAL_RESET_2026") { db.ref('requests').remove(); alert("Global Core Reset Executed."); }
+    }
+
+    function downloadCSV() {
+        db.ref('requests').once('value', s => {
+            let csv = 'Date,Grade,Roll,Name,Type,Reason,Exit,Return\n';
+            Object.values(s.val() || {}).forEach(r => { if(r.wing === currentUser.wing) csv += `${r.date},${r.class},${r.roll},"${r.name}",${r.leaveType},"${r.reason}",${r.timeOut},${r.timeIn}\n`; });
+            const b = new Blob([csv], { type: 'text/csv' }); const u = window.URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `RKBS_${currentUser.wing}_Archive.csv`; a.click();
+        });
+    }
+</script>
+</body>
+</html>
